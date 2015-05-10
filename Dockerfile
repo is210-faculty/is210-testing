@@ -9,38 +9,44 @@ MAINTAINER Chad Heuschober "chad.heuschober@cuny.edu"
 RUN locale-gen --no-purge en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
+# Setup ENV's
+ENV WORKSPACE /var/workspace
+ENV APPPATH /application
+ENV VIRTUALENV $APPPATH/virtualenv
+ENV PYLINTRC $APPPATH/pylintrc
+ENV TESTDIR $WORKSPACE/tests
+ENV LOGDIR /var/log/
+
+# Make the virtualenv folder
+RUN mkdir -p $VIRTUALENV
+
 # Install python
 RUN apt-get update && apt-get install -y \
-    python \
+    python-virtualenv \
     python-dev \
-    python-pip \
     libxml2-dev \
     build-essential \
     libcurl3-gnutls \
     locales
 
 # Adds the requirements file first
-ADD ./files/requirements.txt /application/requirements.txt
+ADD ./files/requirements.txt $APPPATH/requirements.txt
+
+# Create a virtualenv
+RUN virtualenv $VIRTUALENV
 
 # Install python libs
-RUN pip install -r /application/requirements.txt
+RUN $VIRTUALENV/bin/pip install -r $APPPATH/requirements.txt
 
-# Setup ENV's
-ENV WORKSPACE /var/workspace
-
-ENV APPFILES /application
-
-ENV PYTHONPATH $APPFILES/python
-
-ENV PYLINTRC $APPFILES/pylintrc
-
-ENV TESTDIR $WORKSPACE/tests
-
-ENV LOGDIR /var/log/
+# Adds the pylintrc
+ADD ./files/pylintrc $PYLINTRC
 
 # Adds the remaining application files to get a post-pip slice
-ADD ./files /application
+ADD ./files/bin $APPPATH/bin
+
+# Sets binary files executable
+RUN chmod ugo+x $APPPATH/bin/*
 
 WORKDIR $WORKSPACE
 
-CMD ["/application/runtests.sh"]
+CMD ["/application/bin/runtests"]

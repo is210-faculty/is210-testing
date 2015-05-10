@@ -3,6 +3,9 @@
 #
 # Testrunner for this repository.
 
+PYLINT="${VIRTUALENV}/bin/pylint"
+NOSE="${VIRTUALENV}/bin/nosetests"
+
 # make sure the logdir exists
 mkdir -p "${LOGDIR}"
 
@@ -11,12 +14,11 @@ find ./ -path "./tests" -prune -o -type f -iname "*.py" -print0 | while read -d 
 do
     if [ -z "${PYLINTRC}" ]
     then
-        pylint "${file}" | tee -a "${LOGDIR}/pylint.log"
+        ${PYLINT} "${file}" | tee -a "${LOGDIR}/pylint.log"
     else
-        pylint --rcfile "${PYLINTRC}" "${file}" | tee -a "${LOGDIR}/pylint.log"
+       ${PYLINT}  --rcfile "${PYLINTRC}" "${file}" | tee -a "${LOGDIR}/pylint.log"
     fi
 done
 
 # unit tests
-nosetests -d --with-xunit --xunit-file="${LOGDIR}/nosetest.xml" "${TESTDIR}"
-
+${NOSE} -d --with-xunit --xunit-file="${LOGDIR}/nosetest.xml" "${TESTDIR}"
